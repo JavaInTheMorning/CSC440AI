@@ -121,20 +121,46 @@ class Algorithms:
         self.agent = agent
         self.cellGrid = cellGrid
         
-    #def A_Star
+    def A_Star(self):
+        pass
     
+    def repeated_A_Star(self):
+        pass
+    
+    def DFS(self):
+        pass
                     
 class Agent:
-    def __init__(self, startCoords, goalCoords, north, east, south, west, listOfBlockedCells, cellGrid):
-        self.currentCoords = startCoords
-        self.goalCoords = goalCoords
-        self.north = north
-        self.east = east
-        self.south = south
-        self.west = west
+    def __init__(self, startCell, goalCell, listOfBlockedCells, cellGrid):
+        self.currentCell = startCell
+        self.goalCell = goalCell
+        self.cellGrid = cellGrid
+        self.north = cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1))
+        self.east = cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y))
+        self.south = cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
+        self.west = cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y))
         self.blockedList = listOfBlockedCells
         self.algorithm = Algorithms(self, cellGrid)
     
+    #Helper Method that updates N,E,S,W based on the agent's current cell's coordinates
+    def updateCurrentCell(self, updatedCoords):
+        self.currentCell = self.cellGrid.getCellAt(Coords(updatedCoords.x, updatedCoords.y))
+        self.north = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1))
+        self.east = self.cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y))
+        self.south = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
+        self.west = self.cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y))
+    
+    def getBlockedList(self):
+        if self.north.isBlocked:
+            self.blockedList.append(self.north)
+        elif self.east.isBlocked:
+            self.blockedList.append(self.east)
+        elif self.south.isBlocked:
+            self.blockedList.append(self.south)
+        elif self.west.isBlocked:
+            self.blockedList.append(self.west)
+        return self.blockedList
+                
     def getPath(self):
         #Return algorithm.A_Star() -> Returns list of x,y coords of A*path
         pass
@@ -178,3 +204,4 @@ if __name__ == "__main__" :
     cellSize = 10
     #All that's Needed to be in main
     Gui(app, CellGrid(app,size,size,cellSize,start,goal),coordinates)
+
