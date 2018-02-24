@@ -120,7 +120,7 @@ class CellGrid(Canvas):
     def getCellAt(self, coord):
         if(coord.x < 0 or coord.x >= self.rowNumber or coord.y < 0 or coord.y >= self.columnNumber):
             return NONE        
-        return self.grid[coord.x][coord.y]
+        return self.grid[coord.y][coord.x]
             
 class Algorithms:
     def __init__(self, agent, cellGrid):
@@ -142,6 +142,8 @@ class Algorithms:
             self.agent.updateCurrentCell(current)
             neighbors = self.agent.getUnblockedList()
             for next in neighbors:
+                if next.isBlocked:
+                    continue
                 new_cost = cost_so_far[current] + current.gx_val
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
                     cost_so_far[next] = new_cost
@@ -170,9 +172,9 @@ class Agent:
         self.currentCell = startCell
         self.goalCell = goalCell
         self.cellGrid = cellGrid
-        self.north = cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1))
+        self.north = cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
         self.east = cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y))
-        self.south = cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
+        self.south = cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1))
         self.west = cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y))
         self.blockedList = []
         self.algorithm = Algorithms(self, cellGrid)
@@ -180,24 +182,25 @@ class Agent:
     #Helper Method that updates N,E,S,W based on the agent's current cell's coordinates
     def updateCurrentCell(self, updatedCoords):
         self.currentCell = self.cellGrid.getCellAt(Coords(updatedCoords.x, updatedCoords.y))
-        if self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1)) is NONE:
+        if self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1)) is NONE:
             self.north = NONE
         else:
-            self.north = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1))
+            self.north = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
         if self.cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y)) is NONE:
             self.east = NONE
         else:
             self.east = self.cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y))
-        if self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1)) is NONE:
+        if self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y  + 1)) is NONE:
             self.south = NONE
         else:
-            self.south = self.south = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
+            self.south = self.south = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1))
         if self.cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y)) is NONE:
             self.west = NONE
         else:
             self.west = self.cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y))
     
     def getBlockedList(self):
+        self.blockedList = []
         if(self.north != NONE):
             if self.north.isBlocked:
                 self.blockedList.append(self.north)
@@ -213,19 +216,20 @@ class Agent:
         return self.blockedList
     
     def getUnblockedList(self):
+        self.unblockedList = []
         if self.north != NONE:
             if not self.north.isBlocked:
-                self.blockedList.append(self.north)
+                self.unblockedList.append(self.north)
         if self.east != NONE:
             if not self.east.isBlocked:
-                self.blockedList.append(self.east)
+                self.unblockedList.append(self.east)
         if self.south != NONE:
             if not self.south.isBlocked:
-                self.blockedList.append(self.south)
+                self.unblockedList.append(self.south)
         if self.west != NONE:
             if not self.west.isBlocked:
-                self.blockedList.append(self.west)
-        return self.blockedList
+                self.unblockedList.append(self.west)
+        return self.unblockedList
                 
     def getPath(self):
         #Return algorithm.A_Star() -> Returns list of x,y coords of A*path
