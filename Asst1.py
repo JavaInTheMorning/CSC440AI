@@ -95,7 +95,7 @@ class CellGrid(Canvas):
 
             line = []
             for column in range(columnNumber):
-                c = Cell(self, column, row, cellSize,start,goal)
+                c = Cell(self, row, column, cellSize,start,goal)
                 #***************TODO: ADD DEPTH FIRST SEARCH ALGORITHM TO DRAW THE MAZE PROPERLY & write to File****
                 #Mark cell to be blocked with 30% probability & unblocked with 70% 
                 if random.randint(0,100) < 30:
@@ -130,7 +130,7 @@ class CellGrid(Canvas):
     def getCellAt(self, coord):
         if(coord.x < 0 or coord.x >= self.rowNumber or coord.y < 0 or coord.y >= self.columnNumber):
             return NONE        
-        return self.grid[coord.y][coord.x]
+        return self.grid[coord.x][coord.y]
             
 class Algorithms:
     def __init__(self, agent, cellGrid):
@@ -273,10 +273,10 @@ class Gui: #Instantiation(app = Tk(), grid = CellGrid(params), list of x,y coord
 #For testing methods DELETE LATER ON WHEN DONE!!!     
 if __name__ == "__main__" :
     app = Tk()
-    i = 0
-    j = 0
-    a = 85
-    b = 80
+    i = 86
+    j = 50
+    a = 14
+    b = 30
     start = Coords(i,j)
     goal = Coords(a,b)
     size = 101
