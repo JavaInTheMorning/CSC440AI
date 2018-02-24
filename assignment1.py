@@ -111,10 +111,11 @@ class CellGrid(Canvas):
     #The result of the A*(or other path finding algorithms) shortest path and fills in
     #Corresponding cells in the GUI
     def showPath(self, path):
-        for p in path:
-            cell = self.grid[p.x][p.y]
-            cell._switch()
-            cell.draw()
+        if(path != NONE):
+            for p in path:
+                cell = self.grid[p.x][p.y]
+                cell._switch()
+                cell.draw()
     
     #Helper method to get cell at a x,y coord
     def getCellAt(self, coord):
@@ -150,6 +151,8 @@ class Algorithms:
                     openList.insert(next)
                     came_from[next] = current
         
+        if(current != self.agent.goalCell):
+            return NONE
         temp = current
         temp2.append(current)
         while came_from[temp] != NONE:
