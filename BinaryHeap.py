@@ -11,12 +11,11 @@ class BinaryHeap:
         self.c = (size**2) * 10
 
     def insert(self,cell):
-        cell.heap_val = (self.c * cell.f_val) - cell.g_val
+        cell.heap_val = (self.c * cell.fx_val) - cell.gx_val
         self.heap.append(cell)
         self.bubble_up()
 
     def bubble_up(self):
-
         start = len(self.heap)-1
         for i in range(start,1,-1):
             parent_index = int(math.floor(i/2))
