@@ -1,8 +1,7 @@
 from tkinter import *
 import random
 from BinaryHeap import BinaryHeap
-import numpy as np
-from _overlapped import NULL
+
 
 #GUI Cell class mixed with conceptual Cell class
 class Cell():
@@ -36,9 +35,9 @@ class Cell():
         self.isBlocked = False
         self.isVisited = False
         self.heapvalue = -999
-        self.gx_Val = 1
-        self.hx_Val = 1
-        self.fx_Val = self.gx_Val + self.hx_Val
+        self.gx_val = 1
+        self.hx_val = 1
+        self.fx_val = self.gx_val + self.hx_val
     
     #Gui method for filling in a cell    
     def _switch(self):
@@ -79,7 +78,8 @@ class CellGrid(Canvas):
         self.cellSize = cellSize
         self.start = start
         self.goal = goal
-        
+        self.rowNumber = rowNumber
+        self.columnNumber = columnNumber
         #Create environment(array of cells)
         self.grid = []
         for row in range(rowNumber):
@@ -118,6 +118,8 @@ class CellGrid(Canvas):
     
     #Helper method to get cell at a x,y coord
     def getCellAt(self, coord):
+        if(coord.x < 0 or coord.x >= self.rowNumber or coord.y < 0 or coord.y >= self.columnNumber):
+            return NONE        
         return self.grid[coord.x][coord.y]
             
 class Algorithms:
@@ -126,8 +128,7 @@ class Algorithms:
         self.cellGrid = cellGrid
         
     def A_Star(self):
-        temp = self.agent.currentCell
-        temp2 = {}
+        temp2 = []
         openList = BinaryHeap()
         openList.insert(self.agent.currentCell)
         came_from = {}
@@ -135,7 +136,7 @@ class Algorithms:
         came_from[self.agent.currentCell] = NONE
         cost_so_far[self.agent.currentCell] = 0
         while not openList.empty():
-            current = (Cell)(openList.delete())
+            current = openList.delete()
             if(current == self.agent.goalCell):
                 break
             self.agent.updateCurrentCell(current)
@@ -147,11 +148,12 @@ class Algorithms:
                     openList.insert(next)
                     came_from[next] = current
         
-        self.agent.updateCurrentCell(temp)
-        counter = 1
-        temp2[0] = temp
-        while came_from[temp] != NULL:
-            temp2[counter] = came_from[temp]
+        temp = current
+        temp2.append(current)
+        while came_from[temp] != NONE:
+            temp2.append(came_from[temp])
+            temp = came_from[temp]
+
         return temp2
             
     def heuristic(self):
@@ -164,7 +166,7 @@ class Algorithms:
         pass
                     
 class Agent:
-    def __init__(self, startCell, goalCell, listOfBlockedCells, cellGrid):
+    def __init__(self, startCell, goalCell, cellGrid):
         self.currentCell = startCell
         self.goalCell = goalCell
         self.cellGrid = cellGrid
@@ -172,41 +174,62 @@ class Agent:
         self.east = cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y))
         self.south = cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
         self.west = cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y))
-        self.blockedList = listOfBlockedCells
+        self.blockedList = []
         self.algorithm = Algorithms(self, cellGrid)
     
     #Helper Method that updates N,E,S,W based on the agent's current cell's coordinates
     def updateCurrentCell(self, updatedCoords):
         self.currentCell = self.cellGrid.getCellAt(Coords(updatedCoords.x, updatedCoords.y))
-        self.north = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1))
-        self.east = self.cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y))
-        self.south = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
-        self.west = self.cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y))
+        if self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1)) is NONE:
+            self.north = NONE
+        else:
+            self.north = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y + 1))
+        if self.cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y)) is NONE:
+            self.east = NONE
+        else:
+            self.east = self.cellGrid.getCellAt(Coords(self.currentCell.x + 1, self.currentCell.y))
+        if self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1)) is NONE:
+            self.south = NONE
+        else:
+            self.south = self.south = self.cellGrid.getCellAt(Coords(self.currentCell.x, self.currentCell.y - 1))
+        if self.cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y)) is NONE:
+            self.west = NONE
+        else:
+            self.west = self.cellGrid.getCellAt(Coords(self.currentCell.x - 1, self.currentCell.y))
     
     def getBlockedList(self):
-        if self.north.isBlocked:
-            self.blockedList.append(self.north)
-        elif self.east.isBlocked:
-            self.blockedList.append(self.east)
-        elif self.south.isBlocked:
-            self.blockedList.append(self.south)
-        elif self.west.isBlocked:
-            self.blockedList.append(self.west)
+        if(self.north != NONE):
+            if self.north.isBlocked:
+                self.blockedList.append(self.north)
+        if(self.east != NONE):
+            if self.east.isBlocked:
+                self.blockedList.append(self.east)
+        if self.south != NONE:
+            if self.south.isBlocked:
+                self.blockedList.append(self.south)
+        if self.west != NONE:
+            if self.west.isBlocked:
+                self.blockedList.append(self.west)
         return self.blockedList
     
     def getUnblockedList(self):
-        if not self.north.isBlocked:
-            self.blockedList.append(self.north)
-        elif not self.east.isBlocked:
-            self.blockedList.append(self.east)
-        elif not self.south.isBlocked:
-            self.blockedList.append(self.south)
-        elif not self.west.isBlocked:
-            self.blockedList.append(self.west)
+        if self.north != NONE:
+            if not self.north.isBlocked:
+                self.blockedList.append(self.north)
+        if self.east != NONE:
+            if not self.east.isBlocked:
+                self.blockedList.append(self.east)
+        if self.south != NONE:
+            if not self.south.isBlocked:
+                self.blockedList.append(self.south)
+        if self.west != NONE:
+            if not self.west.isBlocked:
+                self.blockedList.append(self.west)
         return self.blockedList
                 
     def getPath(self):
         #Return algorithm.A_Star() -> Returns list of x,y coords of A*path
+        return self.algorithm.A_Star()
         pass
         
     def addBlockedCell(self, cell): 
@@ -250,6 +273,7 @@ if __name__ == "__main__" :
     goal = Coords(a,b)
     size = 101
     cellSize = 10
+    c = CellGrid(app,size,size,cellSize,start,goal)
+    a = Agent(c.getCellAt(start),c.getCellAt(goal), c)
     #All that's Needed to be in main
-    Gui(app, CellGrid(app,size,size,cellSize,start,goal),coordinates)
-    
+    Gui(app, c, a.getPath())
