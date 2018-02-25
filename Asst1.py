@@ -69,13 +69,13 @@ class Cell():
 
             self.master.create_rectangle(xmin, ymin, xmax, ymax, fill = fill, outline = outline)
     
-    def isBlockedCell(self):
-        if self.fill is Cell.OBSTACLES:
-            self.isBlocked = True
-            return True
-        else:
-            self.isBlocked = False
-            return False
+    #def isBlockedCell(self):
+        #if self.fill is Cell.OBSTACLES:
+            #self.isBlocked = True
+            #return True
+        #else:
+            #self.isBlocked = False
+            #return False
             
 
 #GUI class that stores an array of Cells to represent the agents environment
@@ -98,7 +98,7 @@ class CellGrid(Canvas):
                 c = Cell(self, row, column, cellSize,start,goal)
                 #***************TODO: ADD DEPTH FIRST SEARCH ALGORITHM TO DRAW THE MAZE PROPERLY & write to File****
                 #Mark cell to be blocked with 30% probability & unblocked with 70% 
-                if random.randint(0,100) < 30:
+                if random.randint(0,100) <= 30:
                     c.isBlocked = True
                 else:
                     c.isBlocked = False
@@ -152,7 +152,7 @@ class Algorithms:
             self.agent.updateCurrentCell(current)
             neighbors = self.agent.getUnblockedList()
             for next in neighbors:
-                if next.isBlockedCell():
+                if next.isBlocked:
                     continue
                 new_cost = cost_so_far[current] + current.gx_val
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
@@ -214,32 +214,32 @@ class Agent:
     def getBlockedList(self):
         self.blockedList = []
         if(self.north != NONE):
-            if self.north.isBlockedCell()():
+            if self.north.isBlocked:
                 self.blockedList.append(self.north)
         if(self.east != NONE):
-            if self.east.isBlockedCell()():
+            if self.east.isBlocked:
                 self.blockedList.append(self.east)
         if self.south != NONE:
-            if self.south.isBlockedCell()():
+            if self.south.isBlocked:
                 self.blockedList.append(self.south)
         if self.west != NONE:
-            if self.west.isBlockedCell()():
+            if self.west.isBlocked:
                 self.blockedList.append(self.west)
         return self.blockedList
     
     def getUnblockedList(self):
         self.unblockedList = []
         if self.north != NONE:
-            if not self.north.isBlockedCell():
+            if not self.north.isBlocked:
                 self.unblockedList.append(self.north)
         if self.east != NONE:
-            if not self.east.isBlockedCell():
+            if not self.east.isBlocked:
                 self.unblockedList.append(self.east)
         if self.south != NONE:
-            if not self.south.isBlockedCell():
+            if not self.south.isBlocked:
                 self.unblockedList.append(self.south)
         if self.west != NONE:
-            if not self.west.isBlockedCell():
+            if not self.west.isBlocked:
                 self.unblockedList.append(self.west)
         return self.unblockedList
                 
@@ -270,18 +270,18 @@ class Gui: #Instantiation(app = Tk(), grid = CellGrid(params), list of x,y coord
         grid.pack()
         app.mainloop()
         
-#For testing methods DELETE LATER ON WHEN DONE!!!     
+ 
 if __name__ == "__main__" :
     app = Tk()
-    i = 86
-    j = 50
-    a = 14
-    b = 30
-    start = Coords(i,j)
-    goal = Coords(a,b)
-    size = 101
-    cellSize = 10
-    c = CellGrid(app,size,size,cellSize,start,goal)
-    a = Agent(c.getCellAt(start),c.getCellAt(goal), c)
+    i = 0 #Start x
+    j = 1 #Start y
+    a = 86 # Goal x
+    b = 50 # Goal y
+    start = Coords(i,j) #Make Start Coord
+    goal = Coords(a,b) #Make Goal Coord
+    size = 101 #Size of nxn grid
+    cellSize = 10 #Size of individual cells
+    c = CellGrid(app,size,size,cellSize,start,goal) # Create agents environment
+    a = Agent(c.getCellAt(start),c.getCellAt(goal), c) #Create Agent
     #All that's Needed to be in main
-    Gui(app, c, a.getPath())
+    Gui(app, c, a.getPath()) #Display GUI
