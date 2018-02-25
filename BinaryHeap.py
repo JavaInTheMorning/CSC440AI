@@ -27,9 +27,10 @@ class BinaryHeap:
             child_heap_val = self.heap[i].heap_val
             
             if child_heap_val == parent_heap_val:
-                temp = self.heap[parent_index]
-                self.heap[parent_index] = self.heap[i]
-                self.heap[i] = temp
+                if self.heap[parent_index].gx_val <= self.heap[i].gx_val:
+                    temp = self.heap[parent_index]
+                    self.heap[parent_index] = self.heap[i]
+                    self.heap[i] = temp
             elif child_heap_val < parent_heap_val:
                 temp = self.heap[parent_index]
                 self.heap[parent_index] = self.heap[i]
@@ -68,6 +69,14 @@ class BinaryHeap:
         self.heap.pop()
         self.bubble_down()
         return min_val
+    
+    def contains(self, cell):
+        truth = False
+        for x in self.heap:
+            if x == cell:
+                truth = True
+                
+        return truth
 
     def size(self):
         return len(self.heap)-1
@@ -80,5 +89,3 @@ class BinaryHeap:
 
     def check_min(self):
         return self.heap[1].f_val
-
-
