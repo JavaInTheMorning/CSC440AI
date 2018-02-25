@@ -1,7 +1,9 @@
 from tkinter import *
 import random
 from BinaryHeap import BinaryHeap
-from BinaryHeapTwo import BinaryHeapTwo
+from BinaryHeapTwo   import BinaryHeapTwo
+import csv #For read/write maze to files
+
 
 
 #GUI Cell class mixed with conceptual Cell class
@@ -60,7 +62,7 @@ class Cell():
             if self.isGoal:
                 fill = Cell.GOAL_STATE
                 
-            if self.isBlocked and not self.isGoal and not self.isStart:
+            if self.isBlocked and not (self.isGoal or self.isStart):
                 fill = Cell.OBSTACLES
             
             xmin = self.x * self.size
@@ -90,27 +92,71 @@ class CellGrid(Canvas):
         self.goal = goal
         self.rowNumber = rowNumber
         self.columnNumber = columnNumber
+        readWrite = input("Enter 'r' for read or 'w' to write")
+        file = input("Enter a file name: ")
+        
         #Create environment(array of cells)
         self.grid = []
-        for row in range(rowNumber):
-
-            line = []
-            for column in range(columnNumber):
-                c = Cell(self, row, column, cellSize,start,goal)
-                #***************TODO: ADD DEPTH FIRST SEARCH ALGORITHM TO DRAW THE MAZE PROPERLY & write to File****
-                #Mark cell to be blocked with 30% probability & unblocked with 70% 
-                if random.randint(0,100) <= 30:
-                    c.isBlocked = True
-                else:
-                    c.isBlocked = False
-                line.append(c)
+        if readWrite is "w":
+            f = open(file, "w+") #Truncate/wipe file to overwrite for new maze
+            f.close()
+            for row in range(rowNumber):
+            
+                line = []
+                with open(file, 'a') as csvfile: #Append lines
+                    spamwriter = csv.writer(csvfile)
+                    for column in range(columnNumber):
+                        c = Cell(self, row, column, cellSize,start,goal)
+                        #***************TODO: ADD DEPTH FIRST SEARCH ALGORITHM TO DRAW THE MAZE PROPERLY & write to File****
+                        #Mark cell to be blocked with 30% probability & unblocked with 70% 
+                        if random.randint(0,100) <= 30:
+                            if not c.isGoal and not c.isStart:
+                                c.isBlocked = True
+                                spamwriter.writerow('b')
+                            else:
+                                c.isBlocked = False
+                                spamwriter.writerow('b')
+                        else:
+                            c.isBlocked = False
+                            spamwriter.writerow('u')
+                        line.append(c)
                     
-            self.grid.append(line)
+                    self.grid.append(line)
         
-        #After creating each Cell call helper method to draw the cells
-        self.draw()
-
-
+            #After creating each Cell call helper method to draw the cells
+            self.draw()
+            
+            
+        
+        elif readWrite is "r":
+            fileList = []
+            index = 0
+            with open(file, readWrite) as csvfile:
+                spamreader = csv.reader(csvfile)
+                for n in spamreader:
+                    if ''.join(n).strip():
+                        fileList.append(''.join(map(str,n)))
+                        
+            for row in range(rowNumber):
+            
+                line = []
+                for column in range(columnNumber):
+                    c = Cell(self, row, column, cellSize,start,goal)
+                    #***************TODO: ADD DEPTH FIRST SEARCH ALGORITHM TO DRAW THE MAZE PROPERLY & write to File****
+                    #Mark cell to be blocked with 30% probability & unblocked with 70% 
+                    if fileList[index] is 'b':
+                        c.isBlocked = True
+                    elif fileList[index] is 'u':
+                        c.isBlocked = False
+                    line.append(c)
+                    index = index + 1
+                    
+                self.grid.append(line)
+        
+            #After creating each Cell call helper method to draw the cells
+            self.draw()
+            
+    
     #Gui method for drawing the environment
     def draw(self):
         for row in self.grid:
@@ -121,156 +167,59 @@ class CellGrid(Canvas):
     #The result of the A*(or other path finding algorithms) shortest path and fills in
     #Corresponding cells in the GUI
     def showPath(self, path):
-        if(path != NONE):
-            for p in path:
-                cell = self.grid[p.x][p.y]
-                cell._switch()
-                cell.draw()
+        if path is NONE:
+            return
+        for p in path:
+            cell = self.grid[p.x][p.y]
+            cell._switch()
+            cell.draw()
     
     #Helper method to get cell at a x,y coord
     def getCellAt(self, coord):
-        if(coord.x < 0 or coord.x >= self.rowNumber or coord.y < 0 or coord.y >= self.columnNumber):
+        if(coord.x < 0 or coord.
+           x >= self.rowNumber or coord.y < 0 or coord.y >= self.columnNumber):
             return NONE        
         return self.grid[coord.x][coord.y]
             
 class Algorithms:
     def __init__(self, agent, cellGrid):
         self.agent = agent
-        self.cellGrid = cellGrid
-    
-    def BackwardsA_Star(self):
-        temp2 = []
-        temp = self.agent.currentCell
-        openList = BinaryHeap(temp)
-        openList.insert(self.agent.goalCell)
-        came_from = {}
-        cost_so_far = {}
-        visited = []
-        came_from[self.agent.goalCell] = NONE
-        cost_so_far[self.agent.goalCell] = 0
-        while not openList.empty():
-            current = openList.delete()
-            current.isVisited = True
-            if(not visited.__contains__(current)):
-                if(current == temp):
-                    break
-                self.agent.updateCurrentCell(current)
-                neighbors = self.agent.getUnblockedList()
-                for next in neighbors:
-                    new_cost = cost_so_far[current] + current.gx_val
-                    if next not in cost_so_far or new_cost < cost_so_far[next]:
-                        cost_so_far[next] = new_cost
-                        openList.insert(next)
-                        came_from[next] = current
-            visited.append(current)
-            current.isVisited = True
-            
-        if(current != temp):
-            return NONE
-        temp = current
-        temp2.append(current)
-        while came_from[temp] != NONE:
-            temp2.append(came_from[temp])
-            temp = came_from[temp]
-
-        return temp2
+        self.cellGrid = cellGrid    
         
     def A_Star(self):
         temp2 = []
-        openList = BinaryHeap(self.agent.goalCell)
-        openList.insert(self.agent.currentCell)
         came_from = {}
-        cost_so_far = {}
-        visited = []
-        came_from[self.agent.currentCell] = NONE
-        cost_so_far[self.agent.currentCell] = 0
+        came_from[self.agent.currentCell] = None
+        openList = BinaryHeap(self.cellGrid.getCellAt(self.cellGrid.goal))
+        openList.insert(self.agent.currentCell)
+        closedList = []
         while not openList.empty():
             current = openList.delete()
-            current.isVisited = True
-            if(not visited.__contains__(current)):
-                if(current == self.agent.goalCell):
-                    break
-                self.agent.updateCurrentCell(current)
-                neighbors = self.agent.getUnblockedList()
-                for next in neighbors:
-                    new_cost = cost_so_far[current] + current.gx_val
-                    if next not in cost_so_far or new_cost < cost_so_far[next]:
-                        cost_so_far[next] = new_cost
-                        openList.insert(next)
-                        came_from[next] = current
-            visited.append(current)
-            current.isVisited = True
-            
+            if(current == self.agent.goalCell):
+                break
+            closedList.append(current)
+            self.agent.updateCurrentCell(current)
+            if(current.x == 0 and current.y == 0):
+                print("sup")
+            children = self.agent.getUnblockedList()
+            for x in children:
+                if(closedList.__contains__(x)):
+                    continue
+                if(openList.contains(x)):
+                    new_g = current.gx_val + 1
+                    if(new_g < x.gx_val):
+                        x.gx_val = new_g
+                        came_from[x] = current
+                else:
+                    came_from[x] = current
+                    openList.insert(x)
         if(current != self.agent.goalCell):
-            return NONE
-        temp = current
-        temp2.append(current)
-        while came_from[temp] != NONE:
-            temp2.append(came_from[temp])
-            temp = came_from[temp]
-
-        return temp2
-    
-    def adapativeAStar(self):
-        temp = self.agent.currentCell
-        openList = BinaryHeap(self.agent.goalCell)
-        openList.insert(self.agent.currentCell)
-        came_from = {}
-        cost_so_far = {}
-        visited = []
-        came_from[self.agent.currentCell] = NONE
-        cost_so_far[self.agent.currentCell] = 0
-        while not openList.empty():
-            current = openList.delete()
-            current.isVisited = True
-            if(not visited.__contains__(current)):
-                if(current == self.agent.goalCell):
-                    break
-                self.agent.updateCurrentCell(current)
-                neighbors = self.agent.getUnblockedList()
-                for next in neighbors:
-                    new_cost = cost_so_far[current] + current.gx_val
-                    if next not in cost_so_far or new_cost < cost_so_far[next]:
-                        cost_so_far[next] = new_cost
-                        openList.insert(next)
-                        came_from[next] = current
-            visited.append(current)
-            current.isVisited = True
-            
-        self.agent.updateCurrentCell(current)
-        openList = BinaryHeapTwo(self.agent.goalCell)
+            return None
         temp2 = []
-        openList.insert(self.agent.currentCell)
-        came_from = {}
-        cost_so_far = {}
-        visited = []
-        came_from[self.agent.currentCell] = NONE
-        cost_so_far[self.agent.currentCell] = 0
-        while not openList.empty():
-            current = openList.delete()
-            current.isVisited = True
-            if(not visited.__contains__(current)):
-                if(current == self.agent.goalCell):
-                    break
-                self.agent.updateCurrentCell(current)
-                neighbors = self.agent.getUnblockedList()
-                for next in neighbors:
-                    new_cost = cost_so_far[current] + current.gx_val
-                    if next not in cost_so_far or new_cost < cost_so_far[next]:
-                        cost_so_far[next] = new_cost
-                        openList.insert(next)
-                        came_from[next] = current
-            visited.append(current)
-            current.isVisited = True
-            
-        if(current != self.agent.goalCell):
-            return NONE
-        temp = current
         temp2.append(current)
-        while came_from[temp] != NONE:
-            temp2.append(came_from[temp])
-            temp = came_from[temp]
-
+        while came_from[current] != None:
+            temp2.append(came_from[current])
+            current = came_from[current]  
         return temp2
             
     def heuristic(self):
@@ -345,9 +294,14 @@ class Agent:
             if not self.west.isBlocked:
                 self.unblockedList.append(self.west)
         return self.unblockedList
-                
+    
+    def getHelper(self):
+        return self.algorithm.A_Star()
+    
     def getPath(self):
         #Return algorithm.A_Star() -> Returns list of x,y coords of A*path
+        #temp = Agent(self.goalCell, self.currentCell, self.cellGrid)
+        #return temp.getHelper()
         return self.algorithm.A_Star()
         pass
         
@@ -386,5 +340,6 @@ if __name__ == "__main__" :
     cellSize = 10 #Size of individual cells
     c = CellGrid(app,size,size,cellSize,start,goal) # Create agents environment
     a = Agent(c.getCellAt(start),c.getCellAt(goal), c) #Create Agent
+    
     #All that's Needed to be in main
     Gui(app, c, a.getPath()) #Display GUI
