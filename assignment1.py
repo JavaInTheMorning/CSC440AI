@@ -1,11 +1,12 @@
 from tkinter import *
 import random
 from BinaryHeap import BinaryHeap
+from BinaryHeapTwo import BinaryHeapTwo
 
 
 #GUI Cell class mixed with conceptual Cell class
 class Cell():
-    PATH = "grey" #Filled in cell/Path
+    PATH = "green" #Filled in cell/Path
     EMPTY_CELL = "white" #Empty Cells Color
     PATH_BORDER = "black" #Border of filled in cells
     EMPTY_CELL_BORDER = "black" #Border of empty cells
@@ -68,6 +69,15 @@ class Cell():
             ymax = ymin + self.size
 
             self.master.create_rectangle(xmin, ymin, xmax, ymax, fill = fill, outline = outline)
+    
+    #def isBlockedCell(self):
+        #if self.fill is Cell.OBSTACLES:
+            #self.isBlocked = True
+            #return True
+        #else:
+            #self.isBlocked = False
+            #return False
+            
 
 #GUI class that stores an array of Cells to represent the agents environment
 class CellGrid(Canvas):
@@ -86,10 +96,10 @@ class CellGrid(Canvas):
 
             line = []
             for column in range(columnNumber):
-                c = Cell(self, column, row, cellSize,start,goal)
+                c = Cell(self, row, column, cellSize,start,goal)
                 #***************TODO: ADD DEPTH FIRST SEARCH ALGORITHM TO DRAW THE MAZE PROPERLY & write to File****
                 #Mark cell to be blocked with 30% probability & unblocked with 70% 
-                if random.randint(0,100) < 30:
+                if random.randint(0,100) <= 30:
                     c.isBlocked = True
                 else:
                     c.isBlocked = False
@@ -121,36 +131,138 @@ class CellGrid(Canvas):
     def getCellAt(self, coord):
         if(coord.x < 0 or coord.x >= self.rowNumber or coord.y < 0 or coord.y >= self.columnNumber):
             return NONE        
-        return self.grid[coord.y][coord.x]
+        return self.grid[coord.x][coord.y]
             
 class Algorithms:
     def __init__(self, agent, cellGrid):
         self.agent = agent
         self.cellGrid = cellGrid
+    
+    def BackwardsA_Star(self):
+        temp2 = []
+        temp = self.agent.currentCell
+        openList = BinaryHeap(temp)
+        openList.insert(self.agent.goalCell)
+        came_from = {}
+        cost_so_far = {}
+        visited = []
+        came_from[self.agent.goalCell] = NONE
+        cost_so_far[self.agent.goalCell] = 0
+        while not openList.empty():
+            current = openList.delete()
+            current.isVisited = True
+            if(not visited.__contains__(current)):
+                if(current == temp):
+                    break
+                self.agent.updateCurrentCell(current)
+                neighbors = self.agent.getUnblockedList()
+                for next in neighbors:
+                    new_cost = cost_so_far[current] + current.gx_val
+                    if next not in cost_so_far or new_cost < cost_so_far[next]:
+                        cost_so_far[next] = new_cost
+                        openList.insert(next)
+                        came_from[next] = current
+            visited.append(current)
+            current.isVisited = True
+            
+        if(current != temp):
+            return NONE
+        temp = current
+        temp2.append(current)
+        while came_from[temp] != NONE:
+            temp2.append(came_from[temp])
+            temp = came_from[temp]
+
+        return temp2
         
     def A_Star(self):
         temp2 = []
-        openList = BinaryHeap()
+        openList = BinaryHeap(self.agent.goalCell)
         openList.insert(self.agent.currentCell)
         came_from = {}
         cost_so_far = {}
+        visited = []
         came_from[self.agent.currentCell] = NONE
         cost_so_far[self.agent.currentCell] = 0
         while not openList.empty():
             current = openList.delete()
-            if(current == self.agent.goalCell):
-                break
-            self.agent.updateCurrentCell(current)
-            neighbors = self.agent.getUnblockedList()
-            for next in neighbors:
-                if next.isBlocked:
-                    continue
-                new_cost = cost_so_far[current] + current.gx_val
-                if next not in cost_so_far or new_cost < cost_so_far[next]:
-                    cost_so_far[next] = new_cost
-                    openList.insert(next)
-                    came_from[next] = current
-        
+            current.isVisited = True
+            if(not visited.__contains__(current)):
+                if(current == self.agent.goalCell):
+                    break
+                self.agent.updateCurrentCell(current)
+                neighbors = self.agent.getUnblockedList()
+                for next in neighbors:
+                    new_cost = cost_so_far[current] + current.gx_val
+                    if next not in cost_so_far or new_cost < cost_so_far[next]:
+                        cost_so_far[next] = new_cost
+                        openList.insert(next)
+                        came_from[next] = current
+            visited.append(current)
+            current.isVisited = True
+            
+        if(current != self.agent.goalCell):
+            return NONE
+        temp = current
+        temp2.append(current)
+        while came_from[temp] != NONE:
+            temp2.append(came_from[temp])
+            temp = came_from[temp]
+
+        return temp2
+    
+    def adapativeAStar(self):
+        temp = self.agent.currentCell
+        openList = BinaryHeap(self.agent.goalCell)
+        openList.insert(self.agent.currentCell)
+        came_from = {}
+        cost_so_far = {}
+        visited = []
+        came_from[self.agent.currentCell] = NONE
+        cost_so_far[self.agent.currentCell] = 0
+        while not openList.empty():
+            current = openList.delete()
+            current.isVisited = True
+            if(not visited.__contains__(current)):
+                if(current == self.agent.goalCell):
+                    break
+                self.agent.updateCurrentCell(current)
+                neighbors = self.agent.getUnblockedList()
+                for next in neighbors:
+                    new_cost = cost_so_far[current] + current.gx_val
+                    if next not in cost_so_far or new_cost < cost_so_far[next]:
+                        cost_so_far[next] = new_cost
+                        openList.insert(next)
+                        came_from[next] = current
+            visited.append(current)
+            current.isVisited = True
+            
+        self.agent.updateCurrentCell(current)
+        openList = BinaryHeapTwo(self.agent.goalCell)
+        temp2 = []
+        openList.insert(self.agent.currentCell)
+        came_from = {}
+        cost_so_far = {}
+        visited = []
+        came_from[self.agent.currentCell] = NONE
+        cost_so_far[self.agent.currentCell] = 0
+        while not openList.empty():
+            current = openList.delete()
+            current.isVisited = True
+            if(not visited.__contains__(current)):
+                if(current == self.agent.goalCell):
+                    break
+                self.agent.updateCurrentCell(current)
+                neighbors = self.agent.getUnblockedList()
+                for next in neighbors:
+                    new_cost = cost_so_far[current] + current.gx_val
+                    if next not in cost_so_far or new_cost < cost_so_far[next]:
+                        cost_so_far[next] = new_cost
+                        openList.insert(next)
+                        came_from[next] = current
+            visited.append(current)
+            current.isVisited = True
+            
         if(current != self.agent.goalCell):
             return NONE
         temp = current
@@ -261,26 +373,18 @@ class Gui: #Instantiation(app = Tk(), grid = CellGrid(params), list of x,y coord
         grid.pack()
         app.mainloop()
         
-#For testing methods DELETE LATER ON WHEN DONE!!!     
+ 
 if __name__ == "__main__" :
     app = Tk()
-    
-    
-    coordinates = []
-    x = int(input("Enter x value of shortest path(-999 when done)"))
-    while x != -999:
-        y = int(input("Enter y value of shortest path"))
-        coordinates.append(Coords(x,y))
-        x = int(input("Enter x value of shortest path(-999 when done)"))
-    i = 0
-    j = 0
-    a = 40
-    b = 40
-    start = Coords(i,j)
-    goal = Coords(a,b)
-    size = 101
-    cellSize = 10
-    c = CellGrid(app,size,size,cellSize,start,goal)
-    a = Agent(c.getCellAt(start),c.getCellAt(goal), c)
+    i = 0 #Start x
+    j = 1 #Start y
+    a = 86 # Goal x
+    b = 50 # Goal y
+    start = Coords(i,j) #Make Start Coord
+    goal = Coords(a,b) #Make Goal Coord
+    size = 101 #Size of nxn grid
+    cellSize = 10 #Size of individual cells
+    c = CellGrid(app,size,size,cellSize,start,goal) # Create agents environment
+    a = Agent(c.getCellAt(start),c.getCellAt(goal), c) #Create Agent
     #All that's Needed to be in main
-    Gui(app, c, a.getPath())
+    Gui(app, c, a.getPath()) #Display GUI
