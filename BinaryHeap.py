@@ -5,16 +5,20 @@ import sys
 
 class BinaryHeap:
 
-    def __init__(self,size = 100,tie_val = 0):
+    def __init__ (self,goalCell,size = 100,tie_val = 0):
         self.heap = [0]
         self.tie_break = tie_val # 0 = break in favor of larger g, 1 = break in favor of smaller g
         self.c = (size**2) * 10
+        self.goalCell = goalCell
 
     def insert(self,cell):
-        cell.heap_val = (self.c * cell.fx_val) - cell.gx_val
+        cell.heap_val =  self.heuristic(cell, self.goalCell)+  cell.gx_val
         self.heap.append(cell)
         self.bubble_up()
 
+    def heuristic(self, start, goal):
+        return abs(start.x - goal.x) + abs(start.y - goal.y)
+    
     def bubble_up(self):
         start = len(self.heap)-1
         for i in range(start,1,-1):
